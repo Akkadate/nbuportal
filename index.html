@@ -4,45 +4,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NBU Center Portal Service</title>
-
-    <!-- Tailwind CSS (Corrected Link) -->
+    <title>NBU Smart Portal Service</title>
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Font Awesome (Corrected Link) -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-
-    <!-- Google Fonts: Sarabun (Corrected Link) -->
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
-
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         body {
             font-family: 'Sarabun', sans-serif;
-            background-color: #f8fafc;
+            background-color: #f0f4f8;
         }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-
-        /* Animations */
         .fade-in {
-            animation: fadeIn 0.5s ease-in-out;
+            animation: fadeIn 0.4s ease-out;
         }
 
         @keyframes fadeIn {
@@ -57,384 +32,395 @@
             }
         }
 
-        .glass-card {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
+        .app-card:hover .fav-btn {
+            opacity: 1;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #e2e8f0;
+            border-radius: 2px;
         }
     </style>
 </head>
 
-<body class="text-gray-700">
+<body class="text-gray-700 h-screen flex flex-col overflow-hidden">
 
-    <!-- ================= Login Modal (Mockup) ================= -->
-    <div id="loginModal" class="fixed inset-0 bg-gray-900 bg-opacity-80 z-50 flex items-center justify-center fade-in">
-        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center relative overflow-hidden">
-            <!-- Top Decoration -->
-            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-600 to-yellow-400"></div>
-
-            <div class="mb-6">
-                <div
-                    class="w-20 h-20 bg-blue-900 text-white rounded-full flex items-center justify-center text-3xl font-bold mx-auto shadow-lg mb-4">
-                    N</div>
-                <h2 class="text-2xl font-bold text-gray-800">North Bangkok University</h2>
-                <p class="text-gray-500">Center Portal Service</p>
-            </div>
-
-            <button onclick="mockGoogleLogin()"
-                class="w-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold py-3 px-4 rounded-lg flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md group">
-                <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-6 h-6 mr-3" alt="Google Logo">
-                <span>Sign in with Google (@northbkk.ac.th)</span>
+    <!-- Login Modal -->
+    <div id="loginModal"
+        class="fixed inset-0 bg-[#002d62] bg-opacity-95 z-50 flex items-center justify-center p-4 fade-in">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 text-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-400 to-orange-500"></div>
+            <div
+                class="w-24 h-24 bg-[#002d62] text-white rounded-full flex items-center justify-center text-4xl font-bold mx-auto mb-6 shadow-lg border-4 border-yellow-400">
+                N</div>
+            <h1 class="text-2xl font-bold text-[#002d62]">North Bangkok University</h1>
+            <p class="text-gray-500 text-sm mb-8">Smart Portal Service Integration</p>
+            <button onclick="handleAuthClick()"
+                class="w-full bg-white border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 text-gray-700 font-semibold py-3 px-4 rounded-xl flex items-center justify-center transition-all duration-300 group shadow-sm">
+                <img src="https://www.svgrepo.com/show/475656/google-color.svg"
+                    class="w-6 h-6 mr-3 transition group-hover:scale-110">
+                <span>เข้าสู่ระบบด้วย Google (@northbkk.ac.th)</span>
             </button>
-
-            <p class="mt-6 text-xs text-gray-400">
-                ระบบสำหรับบุคลากรและนักศึกษา มหาวิทยาลัยนอร์ทกรุงเทพ<br>
-                กรุณาใช้อีเมลของมหาวิทยาลัยในการเข้าสู่ระบบ
-            </p>
+            <p id="loginStatus" class="mt-4 text-xs h-4 text-red-500"></p>
         </div>
     </div>
 
-    <!-- ================= Main Portal (Hidden by default) ================= -->
-    <div id="mainPortal" class="hidden min-h-screen flex flex-col">
-
+    <!-- Main Dashboard -->
+    <div id="mainDashboard" class="hidden flex-1 flex flex-col h-full">
         <!-- Navbar -->
-        <nav class="bg-white shadow-sm sticky top-0 z-40 border-b border-gray-100">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between h-16">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 flex items-center gap-3">
-                            <div
-                                class="w-10 h-10 bg-blue-900 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                                N</div>
-                            <div>
-                                <h1 class="font-bold text-blue-900 text-lg leading-none">NBU Portal</h1>
-                                <span class="text-xs text-yellow-600 font-medium">Smart Service</span>
-                            </div>
-                        </div>
+        <header
+            class="bg-white shadow-sm border-b border-gray-200 z-30 h-16 flex items-center justify-between px-4 sm:px-8">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-[#002d62] rounded-lg flex items-center justify-center text-white font-bold">N
+                </div>
+                <div>
+                    <h2 class="font-bold text-[#002d62]">NBU Portal</h2>
+                    <p class="text-[10px] text-gray-500">SMART CAMPUS</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-3 pl-4 border-l border-gray-200">
+                    <div class="text-right hidden sm:block">
+                        <p id="userName" class="text-sm font-bold text-gray-800">Loading...</p>
+                        <p id="userDept" class="text-[11px] text-blue-600">Checking Database...</p>
                     </div>
-                    <div class="flex items-center gap-4">
-                        <!-- Search (Desktop) -->
-                        <div class="hidden md:flex relative">
-                            <input type="text" placeholder="ค้นหาระบบงาน..."
-                                class="bg-gray-100 rounded-full py-2 px-4 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-64 transition-all focus:w-80">
-                            <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400"></i>
+                    <img id="userAvatar" src="" class="w-9 h-9 rounded-full border border-gray-200 p-0.5">
+                    <button onclick="handleSignout()" class="ml-2 text-gray-400 hover:text-red-500 transition"
+                        title="ออกจากระบบ"><i class="fa-solid fa-power-off"></i></button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+            <div class="max-w-7xl mx-auto space-y-6">
+
+                <!-- Welcome Banner -->
+                <div
+                    class="bg-gradient-to-r from-[#002d62] to-blue-800 rounded-2xl p-6 text-white shadow-lg flex justify-between items-center relative overflow-hidden">
+                    <div class="relative z-10">
+                        <h1 class="text-2xl font-bold mb-1">ยินดีต้อนรับ, <span id="welcomeName">...</span> 👋</h1>
+                        <p class="text-blue-200 text-sm opacity-90">จัดการงานและตรวจสอบสถานะของคุณได้ในที่เดียว</p>
+                    </div>
+                    <i
+                        class="fa-solid fa-shapes absolute right-0 bottom-0 text-9xl text-white opacity-5 -mr-4 -mb-4"></i>
+                </div>
+
+                <!-- Widgets -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Mail -->
+                    <div
+                        class="bg-white rounded-2xl p-5 shadow-sm border-t-4 border-red-500 relative overflow-hidden group">
+                        <div class="flex justify-between mb-4">
+                            <h3 class="font-bold text-gray-700"><i class="fa-regular fa-envelope mr-2 text-red-500"></i>
+                                กล่องจดหมาย</h3>
                         </div>
-
-                        <!-- User Profile -->
-                        <div
-                            class="flex items-center gap-3 pl-4 border-l border-gray-200 cursor-pointer group relative">
-                            <div class="text-right hidden sm:block">
-                                <p class="text-sm font-bold text-gray-800" id="userNameDisplay">Loading...</p>
-                                <p class="text-xs text-gray-500" id="userRoleDisplay">Loading...</p>
+                        <div class="flex items-baseline gap-2">
+                            <span id="unreadCount" class="text-4xl font-bold text-gray-800">-</span><span
+                                class="text-sm text-gray-500">ฉบับ (ยังไม่อ่าน)</span>
+                        </div>
+                        <a href="https://mail.google.com" target="_blank"
+                            class="mt-4 inline-block text-xs bg-red-50 text-red-600 px-3 py-1 rounded-full hover:bg-red-100 transition">เปิด
+                            Gmail</a>
+                    </div>
+                    <!-- Calendar -->
+                    <div
+                        class="bg-white rounded-2xl p-5 shadow-sm border-t-4 border-yellow-500 relative overflow-hidden">
+                        <div class="flex justify-between mb-4">
+                            <h3 class="font-bold text-gray-700"><i
+                                    class="fa-regular fa-calendar-check mr-2 text-yellow-600"></i> กิจกรรมวันนี้</h3>
+                        </div>
+                        <div id="eventList"
+                            class="space-y-2 max-h-32 overflow-y-auto pr-1 text-sm text-gray-500 custom-scrollbar"><i
+                                class="fa-solid fa-spinner fa-spin"></i> กำลังโหลด...</div>
+                    </div>
+                    <!-- Weather (Real API) -->
+                    <div
+                        class="bg-gradient-to-br from-cyan-500 to-blue-500 rounded-2xl p-5 text-white shadow-md relative overflow-hidden">
+                        <div class="flex justify-between items-start relative z-10">
+                            <div>
+                                <p class="text-cyan-100 text-xs font-semibold uppercase mb-1">Bangkok (Sapanmai)</p>
+                                <h3 id="weatherTemp" class="text-3xl font-bold">--°C</h3>
+                                <p id="weatherDesc" class="text-sm opacity-90 mt-1">กำลังโหลด...</p>
                             </div>
-                            <img src="https://ui-avatars.com/api/?name=Somchai+J&background=002d62&color=fff"
-                                class="w-10 h-10 rounded-full border-2 border-white shadow-sm group-hover:border-blue-200 transition">
-
-                            <!-- Dropdown -->
-                            <div
-                                class="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-2 hidden group-hover:block fade-in">
-                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"><i
-                                        class="fa-solid fa-user-gear mr-2"></i> ตั้งค่าส่วนตัว</a>
-                                <div class="border-t border-gray-100 my-1"></div>
-                                <a href="#" onclick="location.reload()"
-                                    class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50"><i
-                                        class="fa-solid fa-right-from-bracket mr-2"></i> ออกจากระบบ</a>
-                            </div>
+                            <i id="weatherIcon"
+                                class="fa-solid fa-cloud-sun text-5xl text-yellow-300 animate-pulse"></i>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-white/20 text-xs flex justify-between relative z-10">
+                            <span id="weatherWind">ลม: -- km/h</span>
                         </div>
                     </div>
                 </div>
-            </div>
-        </nav>
 
-        <!-- Content Body -->
-        <main class="flex-grow bg-gray-50 py-8 px-4">
-            <div class="max-w-7xl mx-auto space-y-8">
-
-                <!-- 1. Smart Widgets Section (เชื่อมต่อ API) -->
-                <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-                    <!-- Weather Widget -->
-                    <div
-                        class="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
-                        <div class="relative z-10 flex flex-col h-full justify-between">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <p class="text-blue-100 text-sm"><i class="fa-solid fa-location-dot mr-1"></i>
-                                        วิทยาเขตสะพานใหม่</p>
-                                    <h3 class="text-3xl font-bold mt-1">32°C</h3>
-                                    <p class="text-sm opacity-90">มีเมฆบางส่วน</p>
-                                </div>
-                                <i class="fa-solid fa-cloud-sun text-5xl text-yellow-300 animate-pulse"></i>
-                            </div>
-                            <div class="mt-4 bg-white/10 rounded-lg p-2 flex justify-between text-xs backdrop-blur-sm">
-                                <span>ความชื้น: 70%</span>
-                                <span>PM 2.5: 35</span>
-                            </div>
-                        </div>
-                        <!-- Background Shape -->
-                        <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-white opacity-10 rounded-full blur-2xl">
-                        </div>
-                    </div>
-
-                    <!-- Calendar Widget (Google Calendar Integration) -->
-                    <div
-                        class="bg-white rounded-2xl p-6 shadow-md border-t-4 border-yellow-500 relative overflow-hidden group hover:shadow-xl transition-all">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="font-bold text-gray-800 flex items-center">
-                                <i class="fa-regular fa-calendar-check mr-2 text-yellow-600"></i> กิจกรรมวันนี้
-                            </h3>
-                            <span class="text-xs font-mono bg-gray-100 px-2 py-1 rounded text-gray-500">28 Nov</span>
-                        </div>
-
-                        <!-- Events List -->
-                        <div class="space-y-3">
-                            <div
-                                class="flex items-start gap-3 p-2 rounded-lg hover:bg-yellow-50 transition cursor-pointer">
-                                <div class="flex flex-col items-center min-w-[3rem]">
-                                    <span class="text-xs text-gray-500">10:00</span>
-                                    <div class="h-8 w-0.5 bg-gray-200 my-1"></div>
-                                    <span class="text-xs text-gray-500">11:30</span>
-                                </div>
-                                <div>
-                                    <h4 class="text-sm font-semibold text-gray-800">ประชุมภาควิชา</h4>
-                                    <p class="text-xs text-gray-500"><i class="fa-solid fa-video text-blue-500"></i>
-                                        Google Meet</p>
-                                </div>
-                            </div>
-                            <!-- More events... -->
-                            <div class="text-center mt-2">
-                                <a href="#" class="text-xs text-blue-600 hover:underline">ดูปฏิทินทั้งหมดบน Google
-                                    Calendar -></a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Mailbox Widget (Gmail API Integration) -->
-                    <div
-                        class="bg-white rounded-2xl p-6 shadow-md border-t-4 border-red-500 relative overflow-hidden group hover:shadow-xl transition-all">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="font-bold text-gray-800 flex items-center">
-                                <i class="fa-regular fa-envelope mr-2 text-red-500"></i> กล่องจดหมาย
-                            </h3>
-                            <button class="text-gray-400 hover:text-blue-500"><i
-                                    class="fa-solid fa-rotate-right"></i></button>
-                        </div>
-
-                        <div class="flex items-center justify-center py-4">
-                            <div class="relative">
-                                <div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center">
-                                    <i class="fa-solid fa-envelope-open-text text-3xl text-red-500"></i>
-                                </div>
-                                <span
-                                    class="absolute top-0 right-0 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full border-2 border-white shadow-sm">5
-                                    ใหม่</span>
-                            </div>
-                        </div>
-                        <div class="text-center">
-                            <p class="text-sm text-gray-600 mb-3">คุณมีอีเมลที่ยังไม่ได้อ่าน <strong>5 ฉบับ</strong></p>
-                            <a href="https://mail.google.com" target="_blank"
-                                class="inline-block bg-red-100 text-red-700 text-xs font-bold px-4 py-2 rounded-full hover:bg-red-200 transition">
-                                เปิด Gmail
-                            </a>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 2. My Favorite Section (Customizable) -->
+                <!-- My Favorite -->
                 <section>
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-bold text-gray-800 border-l-4 border-blue-900 pl-3">รายการโปรด (My
-                            Favorite)</h2>
-                        <button class="text-sm text-gray-500 hover:text-blue-600 flex items-center gap-1 transition">
-                            <i class="fa-solid fa-pen"></i> <span class="hidden sm:inline">แก้ไข</span>
-                        </button>
-                    </div>
-
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"
-                        id="favoriteContainer">
-                        <!-- Items will be injected by JS -->
+                    <h2 class="text-xl font-bold text-gray-800 mb-4 border-l-4 border-yellow-500 pl-3">รายการโปรด (My
+                        Favorite)</h2>
+                    <div id="favoriteContainer"
+                        class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 min-h-[100px]">
+                        <p class="col-span-full text-gray-400 text-sm text-center py-8">กำลังโหลดรายการ...</p>
                     </div>
                 </section>
 
-                <!-- 3. All Applications (Categorized) -->
-                <section class="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100">
-                    <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
-                        <i class="fa-solid fa-layer-group mr-2 text-blue-600"></i> ระบบทั้งหมด
-                    </h2>
-
-                    <!-- Filter Tabs -->
-                    <div class="flex flex-wrap gap-2 mb-6">
-                        <button class="px-4 py-2 bg-blue-900 text-white rounded-full text-sm shadow-md">ทั้งหมด</button>
-                        <button
-                            class="px-4 py-2 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-full text-sm">บริการการศึกษา</button>
-                        <button
-                            class="px-4 py-2 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-full text-sm">บุคลากร/HR</button>
-                        <button
-                            class="px-4 py-2 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-full text-sm">IT
-                            & Service</button>
-                    </div>
-
-                    <!-- App Grid -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
-
-                        <!-- Category: Education -->
-                        <div>
-                            <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">บริการการศึกษา
-                            </h3>
-                            <div class="space-y-3">
-                                <a href="#"
-                                    class="flex items-center p-3 rounded-xl hover:bg-blue-50 transition group border border-transparent hover:border-blue-100">
-                                    <div
-                                        class="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-lg mr-3 group-hover:bg-blue-600 group-hover:text-white transition">
-                                        <i class="fa-solid fa-graduation-cap"></i>
-                                    </div>
-                                    <div>
-                                        <h4 class="font-semibold text-gray-700 group-hover:text-blue-700">
-                                            ระบบทะเบียนนักศึกษา</h4>
-                                        <p class="text-xs text-gray-400">ลงทะเบียน, ดูเกรด</p>
-                                    </div>
-                                </a>
-                                <a href="#"
-                                    class="flex items-center p-3 rounded-xl hover:bg-blue-50 transition group border border-transparent hover:border-blue-100">
-                                    <div
-                                        class="w-10 h-10 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-lg mr-3 group-hover:bg-indigo-600 group-hover:text-white transition">
-                                        <i class="fa-solid fa-chalkboard-user"></i>
-                                    </div>
-                                    <div>
-                                        <h4 class="font-semibold text-gray-700 group-hover:text-indigo-700">
-                                            ระบบประเมินการสอน</h4>
-                                        <p class="text-xs text-gray-400">ประเมินอาจารย์ประจำเทอม</p>
-                                    </div>
-                                </a>
-                            </div>
-                        </div>
-
-                        <!-- Category: HR -->
-                        <div>
-                            <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">บุคลากร (HR)</h3>
-                            <div class="space-y-3">
-                                <a href="#"
-                                    class="flex items-center p-3 rounded-xl hover:bg-orange-50 transition group border border-transparent hover:border-orange-100">
-                                    <div
-                                        class="w-10 h-10 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center text-lg mr-3 group-hover:bg-orange-600 group-hover:text-white transition">
-                                        <i class="fa-solid fa-calendar-days"></i>
-                                    </div>
-                                    <div>
-                                        <h4 class="font-semibold text-gray-700 group-hover:text-orange-700">E-Leave
-                                            Online</h4>
-                                        <p class="text-xs text-gray-400">ยื่นใบลา, ตรวจสอบวันลา</p>
-                                    </div>
-                                </a>
-                                <a href="#"
-                                    class="flex items-center p-3 rounded-xl hover:bg-green-50 transition group border border-transparent hover:border-green-100">
-                                    <div
-                                        class="w-10 h-10 rounded-lg bg-green-100 text-green-600 flex items-center justify-center text-lg mr-3 group-hover:bg-green-600 group-hover:text-white transition">
-                                        <i class="fa-solid fa-file-invoice-dollar"></i>
-                                    </div>
-                                    <div>
-                                        <h4 class="font-semibold text-gray-700 group-hover:text-green-700">E-Slip
-                                            เงินเดือน</h4>
-                                        <p class="text-xs text-gray-400">ดาวน์โหลดเอกสารทวิ 50</p>
-                                    </div>
-                                </a>
-                            </div>
-                        </div>
-
-                        <!-- Category: IT -->
-                        <div>
-                            <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">IT & Support</h3>
-                            <div class="space-y-3">
-                                <a href="#"
-                                    class="flex items-center p-3 rounded-xl hover:bg-gray-100 transition group border border-transparent hover:border-gray-200">
-                                    <div
-                                        class="w-10 h-10 rounded-lg bg-gray-200 text-gray-600 flex items-center justify-center text-lg mr-3 group-hover:bg-gray-600 group-hover:text-white transition">
-                                        <i class="fa-solid fa-screwdriver-wrench"></i>
-                                    </div>
-                                    <div>
-                                        <h4 class="font-semibold text-gray-700 group-hover:text-gray-900">
-                                            แจ้งซ่อมออนไลน์</h4>
-                                        <p class="text-xs text-gray-400">คอมพิวเตอร์, อินเทอร์เน็ต</p>
-                                    </div>
-                                </a>
-                                <!-- Add Custom Link (My Link) -->
-                                <a href="#"
-                                    class="flex items-center p-3 rounded-xl border-2 border-dashed border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition group justify-center text-gray-400 hover:text-blue-500">
-                                    <i class="fa-solid fa-plus mr-2"></i> เพิ่มลิงก์ส่วนตัว
-                                </a>
-                            </div>
-                        </div>
-
+                <!-- All Apps -->
+                <section class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                    <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center"><i
+                            class="fa-solid fa-layer-group mr-2 text-blue-600"></i> ระบบทั้งหมด</h2>
+                    <div id="allAppsContainer" class="space-y-8">
+                        <div class="text-center text-gray-400 py-10"><i
+                                class="fa-solid fa-circle-notch fa-spin mr-2"></i> กำลังโหลดรายชื่อระบบ...</div>
                     </div>
                 </section>
-
-                <!-- Footer -->
-                <footer class="text-center text-gray-400 text-sm pb-8">
-                    <p>© 2025 North Bangkok University. All rights reserved.</p>
-                    <p class="text-xs mt-1">NBU Smart Portal v2.0 | Developed by IT Center</p>
-                </footer>
 
             </div>
         </main>
     </div>
 
+    <!-- SCRIPT -->
     <script>
-        // === MOCK DATA & LOGIC ===
+        const CLIENT_ID = '943386992862-ed3f5r93lbpe9095d5lca13t811mm4fo.apps.googleusercontent.com';
+        const SCOPES = 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email';
 
-        // ข้อมูลจำลองผู้ใช้งาน (หลังบ้านจะดึงจาก Database)
-        const mockUser = {
-            name: "อาจารย์สมชาย ใจดี",
-            email: "somchai.j@northbkk.ac.th",
-            role: "อาจารย์ / บุคลากร",
-            favorites: [
-                { name: "ระบบทะเบียน", icon: "fa-graduation-cap", color: "bg-blue-100 text-blue-600" },
-                { name: "E-Leave", icon: "fa-calendar-check", color: "bg-orange-100 text-orange-600" },
-                { name: "Google Classroom", icon: "fa-chalkboard", color: "bg-green-100 text-green-600" },
-                { name: "Zoom Meeting", icon: "fa-video", color: "bg-blue-100 text-blue-500" }
-            ]
+        let tokenClient, accessToken = null, userEmail = null;
+        let allApps = [], myFavIds = [];
+
+        window.onload = function () {
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: CLIENT_ID, scope: SCOPES,
+                callback: async (resp) => {
+                    if (resp.access_token) {
+                        accessToken = resp.access_token;
+                        await processLogin();
+                    }
+                },
+            });
+            // โหลดสภาพอากาศทันที (ทำงานจริง)
+            loadWeather();
         };
 
-        // ฟังก์ชันจำลองการ Login
-        function mockGoogleLogin() {
-            const btn = document.querySelector('#loginModal button');
-            const originalContent = btn.innerHTML;
+        function handleAuthClick() { tokenClient.requestAccessToken({ prompt: 'consent' }); }
 
-            // Loading State
-            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> กำลังตรวจสอบข้อมูล...';
-            btn.classList.add('opacity-75', 'cursor-not-allowed');
+        async function processLogin() {
+            const statusText = document.getElementById('loginStatus');
+            statusText.innerText = 'Checking Database...';
 
-            setTimeout(() => {
-                // Hide Modal & Show Portal
-                document.getElementById('loginModal').classList.add('hidden');
-                document.getElementById('mainPortal').classList.remove('hidden');
-                document.getElementById('mainPortal').classList.add('fade-in');
+            try {
+                // 1. Google Profile
+                const profileRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { 'Authorization': `Bearer ${accessToken}` } });
+                const googleUser = await profileRes.json();
+                userEmail = googleUser.email;
 
-                // Set User Info
-                document.getElementById('userNameDisplay').innerText = mockUser.name;
-                document.getElementById('userRoleDisplay').innerText = mockUser.role;
+                // 2. Check DB
+                const dbCheck = await fetch('check_db.php', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: userEmail })
+                });
+                const dbResult = await dbCheck.json();
 
-                // Render Favorites
-                renderFavorites();
+                if (dbResult.status === 'success') {
+                    // Update UI
+                    document.getElementById('welcomeName').innerText = googleUser.given_name;
+                    document.getElementById('userName').innerText = googleUser.name;
+                    document.getElementById('userAvatar').src = googleUser.picture;
+                    document.getElementById('userDept').innerText = `${dbResult.role.toUpperCase()} | ${dbResult.department}`;
 
-            }, 1500);
+                    document.getElementById('loginModal').classList.add('hidden');
+                    document.getElementById('mainDashboard').classList.remove('hidden');
+                    document.getElementById('mainDashboard').classList.add('fade-in');
+
+                    // Load Data
+                    loadGmailData();
+                    loadCalendarData();
+                    loadDashboardApps();
+                } else {
+                    statusText.innerText = 'Access Denied: ไม่พบข้อมูลในระบบ';
+                    statusText.classList.add('text-red-500');
+                }
+            } catch (error) {
+                console.error(error);
+                statusText.innerText = 'เกิดข้อผิดพลาดในการเชื่อมต่อ';
+            }
         }
 
-        // ฟังก์ชันแสดงรายการโปรด
-        function renderFavorites() {
-            const container = document.getElementById('favoriteContainer');
-            container.innerHTML = mockUser.favorites.map(item => `
-                <a href="#" class="bg-white p-4 rounded-xl shadow-sm hover:shadow-md hover:-translate-y-1 transition border border-gray-100 flex flex-col items-center justify-center text-center group h-32">
-                    <div class="w-12 h-12 rounded-full ${item.color} flex items-center justify-center text-xl mb-3 shadow-sm group-hover:scale-110 transition">
-                        <i class="fa-solid ${item.icon}"></i>
+        // --- Gmail API (Real) ---
+        async function loadGmailData() {
+            try {
+                const res = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?q=is:unread%20in:inbox', {
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+                const data = await res.json();
+                const count = data.resultSizeEstimate || 0;
+                document.getElementById('unreadCount').innerText = count;
+            } catch (err) {
+                console.error("Gmail Error:", err);
+                document.getElementById('unreadCount').innerText = "-";
+            }
+        }
+
+        // --- Calendar API (Real) ---
+        async function loadCalendarData() {
+            const container = document.getElementById('eventList');
+            const now = new Date();
+            const endOfDay = new Date(); endOfDay.setHours(23, 59, 59);
+
+            try {
+                const url = `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${now.toISOString()}&timeMax=${endOfDay.toISOString()}&singleEvents=true&orderBy=startTime`;
+                const res = await fetch(url, { headers: { 'Authorization': `Bearer ${accessToken}` } });
+                const data = await res.json();
+
+                container.innerHTML = '';
+                if (data.items && data.items.length > 0) {
+                    data.items.forEach(event => {
+                        let timeStr = "All Day";
+                        if (event.start.dateTime) {
+                            timeStr = new Date(event.start.dateTime).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+                        }
+                        const link = event.hangoutLink ? `<a href="${event.hangoutLink}" target="_blank" class="text-blue-500 hover:text-blue-700 ml-1"><i class="fa-solid fa-video"></i></a>` : '';
+                        container.innerHTML += `
+                            <div class="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0 hover:bg-gray-50 rounded px-1 transition">
+                                <span class="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded min-w-[45px] text-center">${timeStr}</span>
+                                <span class="truncate flex-1 text-sm text-gray-700 font-medium">${event.summary} ${link}</span>
+                            </div>`;
+                    });
+                } else {
+                    container.innerHTML = '<p class="text-center py-4 text-gray-400 text-xs">ไม่มีกิจกรรมสำหรับวันนี้</p>';
+                }
+            } catch (err) {
+                console.error("Calendar Error:", err);
+                container.innerHTML = '<p class="text-center py-2 text-red-400 text-xs">โหลดปฏิทินไม่ได้</p>';
+            }
+        }
+
+        // --- Weather API (Real Implementation) ---
+        async function loadWeather() {
+            try {
+                // พิกัด ม.นอร์ทกรุงเทพ (13.9130, 100.6070)
+                const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=13.9130&longitude=100.6070&current_weather=true&windspeed_unit=kmh');
+                const data = await res.json();
+
+                if (!data.current_weather) throw new Error("No weather data");
+
+                const w = data.current_weather;
+                document.getElementById('weatherTemp').innerText = `${Math.round(w.temperature)}°C`;
+                document.getElementById('weatherWind').innerText = `ลม: ${w.windspeed} km/h`;
+
+                // แปลง WMO Code เป็นคำอธิบายภาษาไทยและไอคอน
+                const code = w.weathercode;
+                let desc = "ท้องฟ้าแจ่มใส";
+                let icon = "fa-sun";
+                let color = "text-yellow-300";
+
+                if (code === 0) { desc = "ท้องฟ้าแจ่มใส"; icon = "fa-sun"; color = "text-yellow-300"; }
+                else if (code >= 1 && code <= 3) { desc = "มีเมฆบางส่วน"; icon = "fa-cloud-sun"; color = "text-gray-100"; }
+                else if (code >= 45 && code <= 48) { desc = "มีหมอก"; icon = "fa-smog"; color = "text-gray-300"; }
+                else if (code >= 51 && code <= 55) { desc = "ฝนปรอยๆ"; icon = "fa-cloud-rain"; color = "text-blue-200"; }
+                else if (code >= 61 && code <= 67) { desc = "ฝนตก"; icon = "fa-cloud-showers-heavy"; color = "text-blue-300"; }
+                else if (code >= 80 && code <= 82) { desc = "ฝนตกหนัก"; icon = "fa-cloud-showers-water"; color = "text-blue-400"; }
+                else if (code >= 95) { desc = "พายุฝนฟ้าคะนอง"; icon = "fa-cloud-bolt"; color = "text-yellow-400"; }
+
+                document.getElementById('weatherDesc').innerText = desc;
+                const iconElem = document.getElementById('weatherIcon');
+                iconElem.className = `fa-solid ${icon} text-5xl ${color} animate-pulse`;
+
+            } catch (err) {
+                console.error("Weather Error", err);
+                document.getElementById('weatherDesc').innerText = "โหลดไม่ได้";
+            }
+        }
+
+        // --- Apps Logic ---
+        async function loadDashboardApps() {
+            try {
+                const res = await fetch('get_dashboard.php', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: userEmail })
+                });
+                const data = await res.json();
+
+                if (data.status === 'success') {
+                    allApps = data.apps;
+                    myFavIds = data.favorites;
+                    renderApps();
+                }
+            } catch (err) { console.error("Fetch Apps Error:", err); }
+        }
+
+        function renderApps() {
+            const favContainer = document.getElementById('favoriteContainer');
+            const allContainer = document.getElementById('allAppsContainer');
+
+            favContainer.innerHTML = '';
+            allContainer.innerHTML = '';
+
+            const favApps = allApps.filter(app => myFavIds.includes(app.app_id));
+            if (favApps.length > 0) {
+                favApps.forEach(app => favContainer.innerHTML += createAppCard(app, true));
+            } else {
+                favContainer.innerHTML = '<p class="col-span-full text-gray-400 text-sm text-center py-8">คลิกรูปดาวที่แอพด้านล่างเพื่อเพิ่มรายการโปรด</p>';
+            }
+
+            const grouped = allApps.reduce((acc, app) => {
+                const cat = app.category_name || 'อื่นๆ';
+                if (!acc[cat]) acc[cat] = [];
+                acc[cat].push(app);
+                return acc;
+            }, {});
+
+            for (const [category, apps] of Object.entries(grouped)) {
+                let categoryHTML = `
+                    <div class="mb-8">
+                        <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3 border-b pb-2 border-gray-100 flex items-center">
+                            <span class="bg-blue-50 text-blue-600 px-2 py-0.5 rounded mr-2"><i class="fa-solid fa-folder"></i></span> ${category}
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            ${apps.map(app => createAppCard(app, false)).join('')}
+                        </div>
                     </div>
-                    <span class="text-sm font-medium text-gray-600 group-hover:text-blue-700 leading-tight">${item.name}</span>
-                </a>
-            `).join('') + `
-                <button class="bg-gray-50 border-2 border-dashed border-gray-200 p-4 rounded-xl hover:border-blue-400 hover:text-blue-500 transition flex flex-col items-center justify-center text-gray-400 h-32">
-                    <i class="fa-solid fa-plus text-2xl mb-2"></i>
-                    <span class="text-xs font-medium">เพิ่มรายการ</span>
-                </button>
+                `;
+                allContainer.innerHTML += categoryHTML;
+            }
+        }
+
+        function createAppCard(app, isFavSection) {
+            const isFav = myFavIds.includes(app.app_id);
+            const starClass = isFav ? "text-yellow-400" : "text-gray-300";
+            const colors = ['blue', 'orange', 'green', 'purple', 'teal'];
+            const color = colors[app.app_id % colors.length];
+
+            return `
+                <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition relative group app-card flex items-center gap-3">
+                    <div class="w-10 h-10 bg-${color}-50 text-${color}-600 rounded-lg flex items-center justify-center text-lg shrink-0 transition group-hover:bg-${color}-600 group-hover:text-white">
+                        <i class="fa-solid ${app.icon_class}"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-bold text-gray-700 text-sm truncate">${app.app_name}</h4>
+                        <p class="text-xs text-gray-400 truncate">${app.app_description}</p>
+                    </div>
+                    <a href="${app.app_url}" target="_blank" class="absolute inset-0 z-0"></a>
+                    <button onclick="toggleFavorite(${app.app_id})" class="fav-btn absolute top-2 right-2 z-10 ${isFavSection ? '' : 'opacity-0'} transition hover:scale-110 bg-white rounded-full p-1 shadow-sm border border-gray-100">
+                        <i class="fa-solid fa-star ${starClass} text-xs"></i>
+                    </button>
+                </div>
             `;
         }
+
+        async function toggleFavorite(appId) {
+            const isFav = myFavIds.includes(appId);
+            const action = isFav ? 'remove' : 'add';
+            if (isFav) { myFavIds = myFavIds.filter(id => id !== appId); }
+            else { myFavIds.push(appId); }
+            renderApps();
+            await fetch('toggle_favorite.php', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: userEmail, app_id: appId, action: action })
+            });
+        }
+
+        function handleSignout() { if (accessToken) google.accounts.oauth2.revoke(accessToken); location.reload(); }
     </script>
 </body>
 
