@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NBU Smart Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        .nbu-blue {
+            color: #002d62;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="bg-[#002d62] text-white px-6 py-4 flex justify-between items-center shadow-md">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-[#002d62] font-bold">N
+            </div>
+            <span class="text-xl font-bold">NBU Portal</span>
+        </div>
+        <div class="flex items-center space-x-4">
+            <span><i class="fa-solid fa-user mr-2"></i> อ.สมชาย (Logout)</span>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+
+            <div
+                class="bg-gradient-to-r from-blue-500 to-blue-400 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+                <div class="relative z-10">
+                    <h3 class="text-lg font-semibold">กรุงเทพมหานคร</h3>
+                    <div class="flex items-center mt-2">
+                        <span class="text-4xl font-bold mr-4">32°C</span>
+                        <i class="fa-solid fa-cloud-sun text-4xl"></i>
+                    </div>
+                    <p class="mt-2 text-sm opacity-90">มีเมฆบางส่วน</p>
+                </div>
+                <i class="fa-solid fa-cloud absolute -bottom-4 -right-4 text-8xl text-white opacity-20"></i>
+            </div>
+
+            <div class="bg-white rounded-xl p-6 shadow-md border-l-4 border-yellow-500">
+                <div class="flex justify-between items-start mb-4">
+                    <h3 class="text-gray-700 font-bold text-lg">ปฏิทินกิจกรรม</h3>
+                    <span class="text-xs bg-gray-100 px-2 py-1 rounded">วันนี้</span>
+                </div>
+                <ul class="space-y-3">
+                    <li class="flex items-center text-sm">
+                        <div class="w-2 h-2 bg-red-500 rounded-full mr-3"></div>
+                        <span class="flex-1 text-gray-600">ประชุมภาควิชา (10:00 น.)</span>
+                    </li>
+                    <li class="flex items-center text-sm">
+                        <div class="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                        <span class="flex-1 text-gray-600">ส่งเกรด มคอ.3 (16:00 น.)</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="bg-white rounded-xl p-6 shadow-md border-l-4 border-orange-500 flex flex-col justify-between">
+                <div>
+                    <h3 class="text-gray-700 font-bold text-lg mb-1">กล่องจดหมาย</h3>
+                    <p class="text-gray-400 text-xs">Office 365 Integration</p>
+                </div>
+                <div class="flex items-center mt-4">
+                    <div
+                        class="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center text-red-500 text-xl mr-4">
+                        <i class="fa-regular fa-envelope"></i>
+                    </div>
+                    <div>
+                        <span class="text-2xl font-bold text-gray-800">5</span>
+                        <span class="text-sm text-gray-500">อีเมลที่ยังไม่อ่าน</span>
+                    </div>
+                    <button class="ml-auto text-sm text-blue-600 hover:underline">ไปที่ Mailbox</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold nbu-blue">รายการโปรด (My Favorite)</h2>
+                <button class="text-sm text-gray-500 hover:text-blue-600"><i class="fa-solid fa-pen-to-square"></i>
+                    แก้ไข</button>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                <a href="#"
+                    class="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition text-center border border-gray-100 group">
+                    <div
+                        class="w-12 h-12 mx-auto bg-blue-50 text-blue-600 rounded-full flex items-center justify-center text-xl mb-2 group-hover:bg-blue-600 group-hover:text-white transition">
+                        <i class="fa-solid fa-user-graduate"></i>
+                    </div>
+                    <span class="text-sm font-medium text-gray-700">ระบบทะเบียน</span>
+                </a>
+                <a href="#"
+                    class="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition text-center border border-gray-100 group">
+                    <div
+                        class="w-12 h-12 mx-auto bg-green-50 text-green-600 rounded-full flex items-center justify-center text-xl mb-2 group-hover:bg-green-600 group-hover:text-white transition">
+                        <i class="fa-solid fa-file-invoice-dollar"></i>
+                    </div>
+                    <span class="text-sm font-medium text-gray-700">สลิปเงินเดือน</span>
+                </a>
+                <button
+                    class="border-2 border-dashed border-gray-300 p-4 rounded-lg text-gray-400 hover:border-blue-400 hover:text-blue-500 transition flex flex-col items-center justify-center">
+                    <i class="fa-solid fa-plus text-xl mb-1"></i>
+                    <span class="text-xs">เพิ่มรายการ</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="border-t border-gray-200 pt-8">
+            <h2 class="text-xl font-bold text-gray-600 mb-6">ระบบทั้งหมด (All Applications)</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div
+                    class="bg-white rounded-lg p-4 shadow-sm border border-gray-200 opacity-75 hover:opacity-100 transition">
+                    <h4 class="font-bold text-gray-800">กลุ่มงานบริการการศึกษา</h4>
+                    <ul class="mt-2 space-y-1 text-sm text-blue-600">
+                        <li><a href="#" class="hover:underline">• ตรวจสอบตารางสอบ</a></li>
+                        <li><a href="#" class="hover:underline">• ประเมินผู้สอน</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+
+</html>

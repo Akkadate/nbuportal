@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NBU Center Portal Service</title>
+
+    <!-- Tailwind CSS (Corrected Link) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome (Corrected Link) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Fonts: Sarabun (Corrected Link) -->
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+    </style>
+</head>
+
+<body class="text-gray-700">
+
+    <!-- ================= Login Modal (Mockup) ================= -->
+    <div id="loginModal" class="fixed inset-0 bg-gray-900 bg-opacity-80 z-50 flex items-center justify-center fade-in">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center relative overflow-hidden">
+            <!-- Top Decoration -->
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-600 to-yellow-400"></div>
+
+            <div class="mb-6">
+                <div
+                    class="w-20 h-20 bg-blue-900 text-white rounded-full flex items-center justify-center text-3xl font-bold mx-auto shadow-lg mb-4">
+                    N</div>
+                <h2 class="text-2xl font-bold text-gray-800">North Bangkok University</h2>
+                <p class="text-gray-500">Center Portal Service</p>
+            </div>
+
+            <button onclick="mockGoogleLogin()"
+                class="w-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold py-3 px-4 rounded-lg flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md group">
+                <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-6 h-6 mr-3" alt="Google Logo">
+                <span>Sign in with Google (@northbkk.ac.th)</span>
+            </button>
+
+            <p class="mt-6 text-xs text-gray-400">
+                ระบบสำหรับบุคลากรและนักศึกษา มหาวิทยาลัยนอร์ทกรุงเทพ<br>
+                กรุณาใช้อีเมลของมหาวิทยาลัยในการเข้าสู่ระบบ
+            </p>
+        </div>
+    </div>
+
+    <!-- ================= Main Portal (Hidden by default) ================= -->
+    <div id="mainPortal" class="hidden min-h-screen flex flex-col">
+
+        <!-- Navbar -->
+        <nav class="bg-white shadow-sm sticky top-0 z-40 border-b border-gray-100">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 flex items-center gap-3">
+                            <div
+                                class="w-10 h-10 bg-blue-900 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                                N</div>
+                            <div>
+                                <h1 class="font-bold text-blue-900 text-lg leading-none">NBU Portal</h1>
+                                <span class="text-xs text-yellow-600 font-medium">Smart Service</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <!-- Search (Desktop) -->
+                        <div class="hidden md:flex relative">
+                            <input type="text" placeholder="ค้นหาระบบงาน..."
+                                class="bg-gray-100 rounded-full py-2 px-4 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-64 transition-all focus:w-80">
+                            <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400"></i>
+                        </div>
+
+                        <!-- User Profile -->
+                        <div
+                            class="flex items-center gap-3 pl-4 border-l border-gray-200 cursor-pointer group relative">
+                            <div class="text-right hidden sm:block">
+                                <p class="text-sm font-bold text-gray-800" id="userNameDisplay">Loading...</p>
+                                <p class="text-xs text-gray-500" id="userRoleDisplay">Loading...</p>
+                            </div>
+                            <img src="https://ui-avatars.com/api/?name=Somchai+J&background=002d62&color=fff"
+                                class="w-10 h-10 rounded-full border-2 border-white shadow-sm group-hover:border-blue-200 transition">
+
+                            <!-- Dropdown -->
+                            <div
+                                class="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-2 hidden group-hover:block fade-in">
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"><i
+                                        class="fa-solid fa-user-gear mr-2"></i> ตั้งค่าส่วนตัว</a>
+                                <div class="border-t border-gray-100 my-1"></div>
+                                <a href="#" onclick="location.reload()"
+                                    class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50"><i
+                                        class="fa-solid fa-right-from-bracket mr-2"></i> ออกจากระบบ</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Content Body -->
+        <main class="flex-grow bg-gray-50 py-8 px-4">
+            <div class="max-w-7xl mx-auto space-y-8">
+
+                <!-- 1. Smart Widgets Section (เชื่อมต่อ API) -->
+                <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                    <!-- Weather Widget -->
+                    <div
+                        class="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
+                        <div class="relative z-10 flex flex-col h-full justify-between">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-blue-100 text-sm"><i class="fa-solid fa-location-dot mr-1"></i>
+                                        วิทยาเขตสะพานใหม่</p>
+                                    <h3 class="text-3xl font-bold mt-1">32°C</h3>
+                                    <p class="text-sm opacity-90">มีเมฆบางส่วน</p>
+                                </div>
+                                <i class="fa-solid fa-cloud-sun text-5xl text-yellow-300 animate-pulse"></i>
+                            </div>
+                            <div class="mt-4 bg-white/10 rounded-lg p-2 flex justify-between text-xs backdrop-blur-sm">
+                                <span>ความชื้น: 70%</span>
+                                <span>PM 2.5: 35</span>
+                            </div>
+                        </div>
+                        <!-- Background Shape -->
+                        <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-white opacity-10 rounded-full blur-2xl">
+                        </div>
+                    </div>
+
+                    <!-- Calendar Widget (Google Calendar Integration) -->
+                    <div
+                        class="bg-white rounded-2xl p-6 shadow-md border-t-4 border-yellow-500 relative overflow-hidden group hover:shadow-xl transition-all">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-gray-800 flex items-center">
+                                <i class="fa-regular fa-calendar-check mr-2 text-yellow-600"></i> กิจกรรมวันนี้
+                            </h3>
+                            <span class="text-xs font-mono bg-gray-100 px-2 py-1 rounded text-gray-500">28 Nov</span>
+                        </div>
+
+                        <!-- Events List -->
+                        <div class="space-y-3">
+                            <div
+                                class="flex items-start gap-3 p-2 rounded-lg hover:bg-yellow-50 transition cursor-pointer">
+                                <div class="flex flex-col items-center min-w-[3rem]">
+                                    <span class="text-xs text-gray-500">10:00</span>
+                                    <div class="h-8 w-0.5 bg-gray-200 my-1"></div>
+                                    <span class="text-xs text-gray-500">11:30</span>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-semibold text-gray-800">ประชุมภาควิชา</h4>
+                                    <p class="text-xs text-gray-500"><i class="fa-solid fa-video text-blue-500"></i>
+                                        Google Meet</p>
+                                </div>
+                            </div>
+                            <!-- More events... -->
+                            <div class="text-center mt-2">
+                                <a href="#" class="text-xs text-blue-600 hover:underline">ดูปฏิทินทั้งหมดบน Google
+                                    Calendar -></a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mailbox Widget (Gmail API Integration) -->
+                    <div
+                        class="bg-white rounded-2xl p-6 shadow-md border-t-4 border-red-500 relative overflow-hidden group hover:shadow-xl transition-all">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-gray-800 flex items-center">
+                                <i class="fa-regular fa-envelope mr-2 text-red-500"></i> กล่องจดหมาย
+                            </h3>
+                            <button class="text-gray-400 hover:text-blue-500"><i
+                                    class="fa-solid fa-rotate-right"></i></button>
+                        </div>
+
+                        <div class="flex items-center justify-center py-4">
+                            <div class="relative">
+                                <div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center">
+                                    <i class="fa-solid fa-envelope-open-text text-3xl text-red-500"></i>
+                                </div>
+                                <span
+                                    class="absolute top-0 right-0 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full border-2 border-white shadow-sm">5
+                                    ใหม่</span>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-sm text-gray-600 mb-3">คุณมีอีเมลที่ยังไม่ได้อ่าน <strong>5 ฉบับ</strong></p>
+                            <a href="https://mail.google.com" target="_blank"
+                                class="inline-block bg-red-100 text-red-700 text-xs font-bold px-4 py-2 rounded-full hover:bg-red-200 transition">
+                                เปิด Gmail
+                            </a>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. My Favorite Section (Customizable) -->
+                <section>
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-gray-800 border-l-4 border-blue-900 pl-3">รายการโปรด (My
+                            Favorite)</h2>
+                        <button class="text-sm text-gray-500 hover:text-blue-600 flex items-center gap-1 transition">
+                            <i class="fa-solid fa-pen"></i> <span class="hidden sm:inline">แก้ไข</span>
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"
+                        id="favoriteContainer">
+                        <!-- Items will be injected by JS -->
+                    </div>
+                </section>
+
+                <!-- 3. All Applications (Categorized) -->
+                <section class="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100">
+                    <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                        <i class="fa-solid fa-layer-group mr-2 text-blue-600"></i> ระบบทั้งหมด
+                    </h2>
+
+                    <!-- Filter Tabs -->
+                    <div class="flex flex-wrap gap-2 mb-6">
+                        <button class="px-4 py-2 bg-blue-900 text-white rounded-full text-sm shadow-md">ทั้งหมด</button>
+                        <button
+                            class="px-4 py-2 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-full text-sm">บริการการศึกษา</button>
+                        <button
+                            class="px-4 py-2 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-full text-sm">บุคลากร/HR</button>
+                        <button
+                            class="px-4 py-2 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-full text-sm">IT
+                            & Service</button>
+                    </div>
+
+                    <!-- App Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
+
+                        <!-- Category: Education -->
+                        <div>
+                            <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">บริการการศึกษา
+                            </h3>
+                            <div class="space-y-3">
+                                <a href="#"
+                                    class="flex items-center p-3 rounded-xl hover:bg-blue-50 transition group border border-transparent hover:border-blue-100">
+                                    <div
+                                        class="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-lg mr-3 group-hover:bg-blue-600 group-hover:text-white transition">
+                                        <i class="fa-solid fa-graduation-cap"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-gray-700 group-hover:text-blue-700">
+                                            ระบบทะเบียนนักศึกษา</h4>
+                                        <p class="text-xs text-gray-400">ลงทะเบียน, ดูเกรด</p>
+                                    </div>
+                                </a>
+                                <a href="#"
+                                    class="flex items-center p-3 rounded-xl hover:bg-blue-50 transition group border border-transparent hover:border-blue-100">
+                                    <div
+                                        class="w-10 h-10 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-lg mr-3 group-hover:bg-indigo-600 group-hover:text-white transition">
+                                        <i class="fa-solid fa-chalkboard-user"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-gray-700 group-hover:text-indigo-700">
+                                            ระบบประเมินการสอน</h4>
+                                        <p class="text-xs text-gray-400">ประเมินอาจารย์ประจำเทอม</p>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Category: HR -->
+                        <div>
+                            <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">บุคลากร (HR)</h3>
+                            <div class="space-y-3">
+                                <a href="#"
+                                    class="flex items-center p-3 rounded-xl hover:bg-orange-50 transition group border border-transparent hover:border-orange-100">
+                                    <div
+                                        class="w-10 h-10 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center text-lg mr-3 group-hover:bg-orange-600 group-hover:text-white transition">
+                                        <i class="fa-solid fa-calendar-days"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-gray-700 group-hover:text-orange-700">E-Leave
+                                            Online</h4>
+                                        <p class="text-xs text-gray-400">ยื่นใบลา, ตรวจสอบวันลา</p>
+                                    </div>
+                                </a>
+                                <a href="#"
+                                    class="flex items-center p-3 rounded-xl hover:bg-green-50 transition group border border-transparent hover:border-green-100">
+                                    <div
+                                        class="w-10 h-10 rounded-lg bg-green-100 text-green-600 flex items-center justify-center text-lg mr-3 group-hover:bg-green-600 group-hover:text-white transition">
+                                        <i class="fa-solid fa-file-invoice-dollar"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-gray-700 group-hover:text-green-700">E-Slip
+                                            เงินเดือน</h4>
+                                        <p class="text-xs text-gray-400">ดาวน์โหลดเอกสารทวิ 50</p>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Category: IT -->
+                        <div>
+                            <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">IT & Support</h3>
+                            <div class="space-y-3">
+                                <a href="#"
+                                    class="flex items-center p-3 rounded-xl hover:bg-gray-100 transition group border border-transparent hover:border-gray-200">
+                                    <div
+                                        class="w-10 h-10 rounded-lg bg-gray-200 text-gray-600 flex items-center justify-center text-lg mr-3 group-hover:bg-gray-600 group-hover:text-white transition">
+                                        <i class="fa-solid fa-screwdriver-wrench"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-gray-700 group-hover:text-gray-900">
+                                            แจ้งซ่อมออนไลน์</h4>
+                                        <p class="text-xs text-gray-400">คอมพิวเตอร์, อินเทอร์เน็ต</p>
+                                    </div>
+                                </a>
+                                <!-- Add Custom Link (My Link) -->
+                                <a href="#"
+                                    class="flex items-center p-3 rounded-xl border-2 border-dashed border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition group justify-center text-gray-400 hover:text-blue-500">
+                                    <i class="fa-solid fa-plus mr-2"></i> เพิ่มลิงก์ส่วนตัว
+                                </a>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- Footer -->
+                <footer class="text-center text-gray-400 text-sm pb-8">
+                    <p>© 2025 North Bangkok University. All rights reserved.</p>
+                    <p class="text-xs mt-1">NBU Smart Portal v2.0 | Developed by IT Center</p>
+                </footer>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // === MOCK DATA & LOGIC ===
+
+        // ข้อมูลจำลองผู้ใช้งาน (หลังบ้านจะดึงจาก Database)
+        const mockUser = {
+            name: "อาจารย์สมชาย ใจดี",
+            email: "somchai.j@northbkk.ac.th",
+            role: "อาจารย์ / บุคลากร",
+            favorites: [
+                { name: "ระบบทะเบียน", icon: "fa-graduation-cap", color: "bg-blue-100 text-blue-600" },
+                { name: "E-Leave", icon: "fa-calendar-check", color: "bg-orange-100 text-orange-600" },
+                { name: "Google Classroom", icon: "fa-chalkboard", color: "bg-green-100 text-green-600" },
+                { name: "Zoom Meeting", icon: "fa-video", color: "bg-blue-100 text-blue-500" }
+            ]
+        };
+
+        // ฟังก์ชันจำลองการ Login
+        function mockGoogleLogin() {
+            const btn = document.querySelector('#loginModal button');
+            const originalContent = btn.innerHTML;
+
+            // Loading State
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> กำลังตรวจสอบข้อมูล...';
+            btn.classList.add('opacity-75', 'cursor-not-allowed');
+
+            setTimeout(() => {
+                // Hide Modal & Show Portal
+                document.getElementById('loginModal').classList.add('hidden');
+                document.getElementById('mainPortal').classList.remove('hidden');
+                document.getElementById('mainPortal').classList.add('fade-in');
+
+                // Set User Info
+                document.getElementById('userNameDisplay').innerText = mockUser.name;
+                document.getElementById('userRoleDisplay').innerText = mockUser.role;
+
+                // Render Favorites
+                renderFavorites();
+
+            }, 1500);
+        }
+
+        // ฟังก์ชันแสดงรายการโปรด
+        function renderFavorites() {
+            const container = document.getElementById('favoriteContainer');
+            container.innerHTML = mockUser.favorites.map(item => `
+                <a href="#" class="bg-white p-4 rounded-xl shadow-sm hover:shadow-md hover:-translate-y-1 transition border border-gray-100 flex flex-col items-center justify-center text-center group h-32">
+                    <div class="w-12 h-12 rounded-full ${item.color} flex items-center justify-center text-xl mb-3 shadow-sm group-hover:scale-110 transition">
+                        <i class="fa-solid ${item.icon}"></i>
+                    </div>
+                    <span class="text-sm font-medium text-gray-600 group-hover:text-blue-700 leading-tight">${item.name}</span>
+                </a>
+            `).join('') + `
+                <button class="bg-gray-50 border-2 border-dashed border-gray-200 p-4 rounded-xl hover:border-blue-400 hover:text-blue-500 transition flex flex-col items-center justify-center text-gray-400 h-32">
+                    <i class="fa-solid fa-plus text-2xl mb-2"></i>
+                    <span class="text-xs font-medium">เพิ่มรายการ</span>
+                </button>
+            `;
+        }
+    </script>
+</body>
+
+</html>
