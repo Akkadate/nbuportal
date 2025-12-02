@@ -51,7 +51,7 @@
 
     <!-- Login Modal -->
     <div id="loginModal"
-        class="fixed inset-0 bg-[#002d62] bg-opacity-95 z-50 flex items-center justify-center p-4 fade-in">
+        class="fixed inset-0 bg-[#002d62] bg-opacity-95 z-50 flex items-center justify-center p-4 fade-in hidden">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 text-center relative overflow-hidden">
             <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-400 to-orange-500"></div>
             <div
@@ -85,8 +85,8 @@
             <div class="flex items-center gap-4">
                 <div class="flex items-center gap-3 pl-4 border-l border-gray-200">
                     <div class="text-right hidden sm:block">
-                        <p id="userName" class="text-sm font-bold text-gray-800">Loading...</p>
-                        <p id="userDept" class="text-[11px] text-blue-600">Checking Database...</p>
+                        <p id="userName" class="text-sm font-bold text-gray-800">...</p>
+                        <p id="userDept" class="text-[11px] text-blue-600">Checking...</p>
                     </div>
                     <img id="userAvatar" src="" class="w-9 h-9 rounded-full border border-gray-200 p-0.5">
                     <button onclick="handleSignout()" class="ml-2 text-gray-400 hover:text-red-500 transition"
@@ -117,7 +117,7 @@
                         class="bg-white rounded-2xl p-5 shadow-sm border-t-4 border-red-500 relative overflow-hidden group">
                         <div class="flex justify-between mb-4">
                             <h3 class="font-bold text-gray-700"><i class="fa-regular fa-envelope mr-2 text-red-500"></i>
-                                กล่องจดหมาย</h3>
+                                กล่องจดหมาย (Primary)</h3>
                         </div>
                         <div class="flex items-baseline gap-2">
                             <span id="unreadCount" class="text-4xl font-bold text-gray-800">-</span><span
@@ -138,17 +138,17 @@
                             class="space-y-2 max-h-32 overflow-y-auto pr-1 text-sm text-gray-500 custom-scrollbar"><i
                                 class="fa-solid fa-spinner fa-spin"></i> กำลังโหลด...</div>
                     </div>
-                    <!-- Weather (Real API) -->
+                    <!-- Weather -->
                     <div
                         class="bg-gradient-to-br from-cyan-500 to-blue-500 rounded-2xl p-5 text-white shadow-md relative overflow-hidden">
                         <div class="flex justify-between items-start relative z-10">
                             <div>
-                                <p class="text-cyan-100 text-xs font-semibold uppercase mb-1">Bangkok (Sapanmai)</p>
+                                <p id="weatherLocation" class="text-cyan-100 text-xs font-semibold uppercase mb-1">
+                                    Checking Location...</p>
                                 <h3 id="weatherTemp" class="text-3xl font-bold">--°C</h3>
                                 <p id="weatherDesc" class="text-sm opacity-90 mt-1">กำลังโหลด...</p>
                             </div>
-                            <i id="weatherIcon"
-                                class="fa-solid fa-cloud-sun text-5xl text-yellow-300 animate-pulse"></i>
+                            <i id="weatherIcon" class="fa-solid fa-cloud-sun text-5xl text-yellow-300"></i>
                         </div>
                         <div class="mt-4 pt-4 border-t border-white/20 text-xs flex justify-between relative z-10">
                             <span id="weatherWind">ลม: -- km/h</span>
@@ -183,59 +183,80 @@
     <!-- SCRIPT -->
     <script>
         const CLIENT_ID = '943386992862-ed3f5r93lbpe9095d5lca13t811mm4fo.apps.googleusercontent.com';
+        const BACKEND_URL = './'; // URL ของโฟลเดอร์ Backend
         const SCOPES = 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email';
 
-        let tokenClient, accessToken = null, userEmail = null;
+        let tokenClient, accessToken = null;
         let allApps = [], myFavIds = [];
 
-        window.onload = function () {
+        window.onload = async function () {
+            // 1. โหลดสภาพอากาศทันที (ไม่ต้องรอ Login)
+            loadWeather();
+
+            // 2. เช็ค Session กับ Server
+            const isLoggedIn = await checkServerSession();
+
+            // 3. เตรียม Google Client
             tokenClient = google.accounts.oauth2.initTokenClient({
                 client_id: CLIENT_ID, scope: SCOPES,
                 callback: async (resp) => {
                     if (resp.access_token) {
-                        accessToken = resp.access_token;
-                        await processLogin();
+                        localStorage.setItem('google_access_token', resp.access_token);
+
+                        if (document.getElementById('loginModal').classList.contains('hidden')) {
+                            loadGmailData(resp.access_token);
+                            loadCalendarData(resp.access_token);
+                        } else {
+                            await processLoginWithGoogle(resp.access_token);
+                        }
                     }
                 },
             });
-            // โหลดสภาพอากาศทันที (ทำงานจริง)
-            loadWeather();
+
+            if (!isLoggedIn) {
+                document.getElementById('loginModal').classList.remove('hidden');
+            } else {
+                const storedToken = localStorage.getItem('google_access_token');
+                if (storedToken) {
+                    loadGmailData(storedToken);
+                    loadCalendarData(storedToken);
+                } else {
+                    showConnectButtons();
+                }
+            }
         };
+
+        // --- Auth Logic ---
+        async function checkServerSession() {
+            try {
+                const res = await fetch(BACKEND_URL + 'auth.php');
+                const data = await res.json();
+                if (data.status === 'authenticated') {
+                    showDashboard(data.user);
+                    return true;
+                }
+                return false;
+            } catch (err) { console.error("Auth Error", err); return false; }
+        }
 
         function handleAuthClick() { tokenClient.requestAccessToken({ prompt: 'consent' }); }
 
-        async function processLogin() {
+        async function processLoginWithGoogle(accessToken) {
             const statusText = document.getElementById('loginStatus');
             statusText.innerText = 'Checking Database...';
 
             try {
-                // 1. Google Profile
                 const profileRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { 'Authorization': `Bearer ${accessToken}` } });
                 const googleUser = await profileRes.json();
-                userEmail = googleUser.email;
 
-                // 2. Check DB
-                const dbCheck = await fetch('check_db.php', {
+                const dbCheck = await fetch(BACKEND_URL + 'check_db.php', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: userEmail })
+                    body: JSON.stringify({ email: googleUser.email, avatar: googleUser.picture })
                 });
                 const dbResult = await dbCheck.json();
 
                 if (dbResult.status === 'success') {
-                    // Update UI
-                    document.getElementById('welcomeName').innerText = googleUser.given_name;
-                    document.getElementById('userName').innerText = googleUser.name;
-                    document.getElementById('userAvatar').src = googleUser.picture;
-                    document.getElementById('userDept').innerText = `${dbResult.role.toUpperCase()} | ${dbResult.department}`;
-
-                    document.getElementById('loginModal').classList.add('hidden');
-                    document.getElementById('mainDashboard').classList.remove('hidden');
-                    document.getElementById('mainDashboard').classList.add('fade-in');
-
-                    // Load Data
-                    loadGmailData();
-                    loadCalendarData();
-                    loadDashboardApps();
+                    location.reload();
                 } else {
                     statusText.innerText = 'Access Denied: ไม่พบข้อมูลในระบบ';
                     statusText.classList.add('text-red-500');
@@ -246,74 +267,106 @@
             }
         }
 
-        // --- Gmail API (Real) ---
-        async function loadGmailData() {
+        function showDashboard(user) {
+            document.getElementById('userName').innerText = user.name;
+            document.getElementById('welcomeName').innerText = user.name.split(' ')[0];
+            document.getElementById('userAvatar').src = user.avatar;
+            document.getElementById('userDept').innerText = `${user.role.toUpperCase()} | ${user.dept}`;
+
+            document.getElementById('loginModal').classList.add('hidden');
+            document.getElementById('mainDashboard').classList.remove('hidden');
+            document.getElementById('mainDashboard').classList.add('fade-in');
+
+            loadDashboardApps();
+        }
+
+        async function handleSignout() {
+            const token = localStorage.getItem('google_access_token');
+            if (token) google.accounts.oauth2.revoke(token);
+            localStorage.removeItem('google_access_token');
+            await fetch(BACKEND_URL + 'logout.php');
+            location.reload();
+        }
+
+        function showConnectButtons() {
+            const btn = '<button onclick="handleAuthClick()" class="text-xs text-blue-500 underline">Connect</button>';
+            document.getElementById('unreadCount').innerHTML = btn;
+            document.getElementById('eventList').innerHTML = '<div class="text-center mt-4">' + btn + '</div>';
+        }
+
+        // --- Data Loading Functions ---
+        async function loadGmailData(token) {
             try {
-                const res = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?q=is:unread%20in:inbox', {
-                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                const res = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/labels/INBOX', {
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
+                if (!res.ok) throw new Error("Token Expired");
                 const data = await res.json();
-                const count = data.resultSizeEstimate || 0;
-                document.getElementById('unreadCount').innerText = count;
+                document.getElementById('unreadCount').innerText = data.messagesUnread || 0;
             } catch (err) {
-                console.error("Gmail Error:", err);
-                document.getElementById('unreadCount').innerText = "-";
+                console.warn("Gmail load failed:", err);
+                showConnectButtons();
             }
         }
 
-        // --- Calendar API (Real) ---
-        async function loadCalendarData() {
+        async function loadCalendarData(token) {
             const container = document.getElementById('eventList');
             const now = new Date();
             const endOfDay = new Date(); endOfDay.setHours(23, 59, 59);
-
             try {
                 const url = `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${now.toISOString()}&timeMax=${endOfDay.toISOString()}&singleEvents=true&orderBy=startTime`;
-                const res = await fetch(url, { headers: { 'Authorization': `Bearer ${accessToken}` } });
+                const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!res.ok) throw new Error("Token Expired");
                 const data = await res.json();
 
                 container.innerHTML = '';
                 if (data.items && data.items.length > 0) {
                     data.items.forEach(event => {
-                        let timeStr = "All Day";
-                        if (event.start.dateTime) {
-                            timeStr = new Date(event.start.dateTime).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-                        }
+                        let timeStr = event.start.dateTime ? new Date(event.start.dateTime).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) : "All Day";
                         const link = event.hangoutLink ? `<a href="${event.hangoutLink}" target="_blank" class="text-blue-500 hover:text-blue-700 ml-1"><i class="fa-solid fa-video"></i></a>` : '';
-                        container.innerHTML += `
-                            <div class="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0 hover:bg-gray-50 rounded px-1 transition">
-                                <span class="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded min-w-[45px] text-center">${timeStr}</span>
-                                <span class="truncate flex-1 text-sm text-gray-700 font-medium">${event.summary} ${link}</span>
-                            </div>`;
+                        container.innerHTML += `<div class="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0 hover:bg-gray-50 rounded px-1 transition"><span class="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded min-w-[45px] text-center">${timeStr}</span><span class="truncate flex-1 text-sm text-gray-700 font-medium">${event.summary} ${link}</span></div>`;
                     });
-                } else {
-                    container.innerHTML = '<p class="text-center py-4 text-gray-400 text-xs">ไม่มีกิจกรรมสำหรับวันนี้</p>';
-                }
+                } else { container.innerHTML = '<p class="text-center py-4 text-gray-400 text-xs">ไม่มีกิจกรรมสำหรับวันนี้</p>'; }
             } catch (err) {
-                console.error("Calendar Error:", err);
-                container.innerHTML = '<p class="text-center py-2 text-red-400 text-xs">โหลดปฏิทินไม่ได้</p>';
+                console.warn("Calendar load failed");
+                showConnectButtons();
             }
         }
 
-        // --- Weather API (Real Implementation) ---
+        // --- Weather API (Dynamic Location + Place Name) ---
         async function loadWeather() {
+            if (navigator.geolocation) {
+                document.getElementById('weatherLocation').innerText = "Locating...";
+                navigator.geolocation.getCurrentPosition(
+                    (p) => fetchWeatherData(p.coords.latitude, p.coords.longitude),
+                    (e) => fetchWeatherData(13.9130, 100.6070, "Bangkok (Sapanmai)") // Fallback
+                );
+            } else { fetchWeatherData(13.9130, 100.6070, "Bangkok (Sapanmai)"); }
+        }
+
+        async function fetchWeatherData(lat, lon, fallbackName = "") {
             try {
-                // พิกัด ม.นอร์ทกรุงเทพ (13.9130, 100.6070)
-                const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=13.9130&longitude=100.6070&current_weather=true&windspeed_unit=kmh');
-                const data = await res.json();
+                // 1. Get Weather
+                const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&windspeed_unit=kmh`);
+                const weatherData = await weatherRes.json();
+                const w = weatherData.current_weather;
 
-                if (!data.current_weather) throw new Error("No weather data");
+                // 2. Get Location Name (Reverse Geocoding)
+                let locationName = fallbackName;
+                if (!locationName) {
+                    try {
+                        const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10`);
+                        const geoData = await geoRes.json();
+                        locationName = geoData.address.city || geoData.address.town || geoData.address.suburb || "Unknown Location";
+                    } catch (e) { locationName = "Unknown Location"; }
+                }
 
-                const w = data.current_weather;
+                document.getElementById('weatherLocation').innerText = locationName;
                 document.getElementById('weatherTemp').innerText = `${Math.round(w.temperature)}°C`;
                 document.getElementById('weatherWind').innerText = `ลม: ${w.windspeed} km/h`;
 
-                // แปลง WMO Code เป็นคำอธิบายภาษาไทยและไอคอน
                 const code = w.weathercode;
-                let desc = "ท้องฟ้าแจ่มใส";
-                let icon = "fa-sun";
-                let color = "text-yellow-300";
-
+                let desc = "ปกติ"; let icon = "fa-sun"; let color = "text-yellow-300";
                 if (code === 0) { desc = "ท้องฟ้าแจ่มใส"; icon = "fa-sun"; color = "text-yellow-300"; }
                 else if (code >= 1 && code <= 3) { desc = "มีเมฆบางส่วน"; icon = "fa-cloud-sun"; color = "text-gray-100"; }
                 else if (code >= 45 && code <= 48) { desc = "มีหมอก"; icon = "fa-smog"; color = "text-gray-300"; }
@@ -323,30 +376,34 @@
                 else if (code >= 95) { desc = "พายุฝนฟ้าคะนอง"; icon = "fa-cloud-bolt"; color = "text-yellow-400"; }
 
                 document.getElementById('weatherDesc').innerText = desc;
-                const iconElem = document.getElementById('weatherIcon');
-                iconElem.className = `fa-solid ${icon} text-5xl ${color} animate-pulse`;
-
-            } catch (err) {
-                console.error("Weather Error", err);
-                document.getElementById('weatherDesc').innerText = "โหลดไม่ได้";
-            }
+                document.getElementById('weatherIcon').className = `fa-solid ${icon} text-5xl ${color} animate-pulse`;
+            } catch (err) { console.error("Weather Error", err); }
         }
 
         // --- Apps Logic ---
         async function loadDashboardApps() {
             try {
-                const res = await fetch('get_dashboard.php', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: userEmail })
-                });
-                const data = await res.json();
+                const res = await fetch(BACKEND_URL + 'get_dashboard.php');
+                const text = await res.text();
 
-                if (data.status === 'success') {
-                    allApps = data.apps;
-                    myFavIds = data.favorites;
-                    renderApps();
+                try {
+                    const data = JSON.parse(text);
+                    if (data.status === 'success') {
+                        allApps = data.apps;
+                        myFavIds = data.favorites;
+                        renderApps();
+                    } else {
+                        console.error("API Error:", data.message);
+                        document.getElementById('allAppsContainer').innerHTML = `<div class="col-span-full text-center text-red-400 py-10">Error: ${data.message}</div>`;
+                    }
+                } catch (e) {
+                    console.error("JSON Parse Error:", text);
+                    document.getElementById('allAppsContainer').innerHTML = `<div class="col-span-full text-center text-red-400 py-10">Server Error</div>`;
                 }
-            } catch (err) { console.error("Fetch Apps Error:", err); }
+            } catch (err) {
+                console.error("Fetch Apps Error:", err);
+                document.getElementById('allAppsContainer').innerHTML = `<div class="col-span-full text-center text-red-400 py-10">Connection Failed</div>`;
+            }
         }
 
         function renderApps() {
@@ -414,13 +471,11 @@
             if (isFav) { myFavIds = myFavIds.filter(id => id !== appId); }
             else { myFavIds.push(appId); }
             renderApps();
-            await fetch('toggle_favorite.php', {
+            await fetch(BACKEND_URL + 'toggle_favorite.php', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: userEmail, app_id: appId, action: action })
+                body: JSON.stringify({ app_id: appId, action: action })
             });
         }
-
-        function handleSignout() { if (accessToken) google.accounts.oauth2.revoke(accessToken); location.reload(); }
     </script>
 </body>
 
